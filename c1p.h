@@ -233,6 +233,7 @@ void columns_clear(columns* Col) {
     q = p;
     p = p->next;
     free(q);
+    q = NULL;
   }
   free(Col); Col = NULL;
 }
@@ -364,14 +365,30 @@ void columns_move(columns* Col, column_cell* x, column_cell* y) {
 /* move the cell pointed by x to the next of the cell y */
 void columns_insert_next(columns* Col, column_cell* x, column_cell* y) {
   if (x == y) { return; }
+  
   /* remove x from E */
-  if (NULL == x->prev) { Col->head = x->next; } /* x is the first element of Col */
-  else { x->prev->next = x->next; }
-  if (NULL == x->next) { Col->last = x->prev; } /* x is the last element of Col */
-  else { x->next->prev = x->prev; }
+  if (NULL == x->prev) { /* x is the first element of Col */
+    Col->head = x->next;
+    Col->head->prev = NULL;
+  }
+  else
+    x->prev->next = x->next;
+  if (NULL == x->next) { /* x is the last element of Col */
+    Col->last = x->prev;
+    Col->last->next = NULL;
+  }
+  else
+    x->next->prev = x->prev;
+  
   /* insert x to the next of y */
-  if (NULL == y->next) { Col->last = x; } /* y is the last element of Col */
-  else { x->next = y->next; x->next->prev = x; }
+  if (NULL == y->next) { /* y is the last element of Col */
+    Col->last = x;
+    Col->last->next = NULL;
+  }
+  else {
+    x->next = y->next;
+    x->next->prev = x;
+  }
   y->next = x;
   x->prev = y;
 }
@@ -790,13 +807,16 @@ lr refine_case_3(partition* P, columns* Col, list_row* T) {
 	for (r = T->head; NULL != r; r = r->next) {
 	  column_cell* ptr = NULL;
 	  if (NULL == r->key->cls) {
-	    if (NULL == T_minus_S->head) { ptr = pv->last; }
-	    else { ptr = T_minus_S->last; }
+	    if (NULL == T_minus_S->head)
+	      ptr = pv->last;
+	    else
+	      ptr = T_minus_S->last;
 	    /* printf("elm = %d\n", ptr->key); */
 	    columns_insert_next(Col, r->key, ptr);
 	    r->key->cls = T_minus_S;
 	    T_minus_S->size += 1;
-	    if (NULL == T_minus_S->head) { T_minus_S->head = r->key; }
+	    if (NULL == T_minus_S->head)
+	      T_minus_S->head = r->key;
 	    T_minus_S->last = r->key;
 	  }
 	}
