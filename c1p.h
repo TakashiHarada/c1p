@@ -779,7 +779,7 @@ lr refine_case_3(partition* P, columns* Col, list_row* T) {
       class* pv = P->last;
       /* FIXMEX? */
       /* if (pv->counter == pv->size) { */ 
-      if (0 == pv->counter) {
+      if (0 == pv->counter || pv->counter == pv->size) {
 	/* pv_intersect_T is unnecessary
 	 * pv is used as pv_minus_T and pv_intersect_T
 	 */
