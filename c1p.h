@@ -680,10 +680,11 @@ lr refine_case_3(partition* P, columns* Col, list_row* T) {
 	flag = true; break;
       }
 
-    /* recompute the couters for each classes */
+    /* recompute the counters for each classes */
     reset_class_counter(P);
     for (r = T->head; NULL != r; r = r->next) {
-      if (NULL != r->key->cls) { ++r->key->cls->counter; }
+      if (NULL != r->key->cls)
+	++r->key->cls->counter;
     }
     
     if (flag) { // refine p_0
@@ -776,7 +777,9 @@ lr refine_case_3(partition* P, columns* Col, list_row* T) {
       T_minus_S->do_intersect = true;
       lr.r = T_minus_S;
       class* pv = P->last;
-      if (pv->counter == pv->size) {
+      /* FIXMEX? */
+      /* if (pv->counter == pv->size) { */ 
+      if (0 == pv->counter) {
 	/* pv_intersect_T is unnecessary
 	 * pv is used as pv_minus_T and pv_intersect_T
 	 */
@@ -896,7 +899,10 @@ void partition_print(partition* P) {
 void partitions_clear(partition** P, const unsigned n) {
   if (NULL == P) { return ; }
   unsigned i;
-  for (i = 0; i < n; ++i) { partition_clear(P[i]); P[i] = NULL; }
+  for (i = 0; i < n; ++i) {
+    partition_clear(P[i]);
+    P[i] = NULL;
+  }
 }
 
 void partition_clear(partition* P) {
@@ -906,6 +912,7 @@ void partition_clear(partition* P) {
     D = C;
     C = C->next;
     free(D);
+    D = NULL;
   }
   free(P);
 }

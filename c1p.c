@@ -11,12 +11,10 @@ int main(const int argc, char** argv) {
   
   unsigned* ord = get_c1p_order(M);
 
-  putchar('\n');
-  order_print(ord, M->n);
-  putchar('\n');
-  
   if (NULL != ord) {
     printf("C1P\n");
+    order_print(ord, M->n);
+    putchar('\n');
     matrix_print_with_order(M, ord);
   }
   else
