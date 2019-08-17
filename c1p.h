@@ -90,6 +90,7 @@ void list_row_clear(list_row*);
 
 partition* set_P1(list_row**, columns*, unsigned);
 void columns_move(columns*, column_cell*, column_cell*);
+void columns_insert_next(columns*, column_cell*, column_cell*);
 lr refine(partition*, columns*, list_row*);
 lr refine_case_1(partition*, columns*, list_row*);
 lr refine_case_2(partition*, columns*, list_row*);
@@ -106,8 +107,9 @@ void partition_clear(partition*);
 
 void order_print(const unsigned* s, const unsigned n) {
   unsigned i;
-  for (i = 0; i < n; ++i)
-    printf("%d", s[i]);
+  printf("%d", s[0]);
+  for (i = 1; i < n; ++i)
+    printf(", %d", s[i]);
   putchar('\n');
 }
 

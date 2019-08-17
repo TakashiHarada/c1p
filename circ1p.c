@@ -1,4 +1,4 @@
-#include "c1p.h"
+#include "circ1p.h"
 
 int main(const int argc, char** argv) {
   if (2 != argc) {
@@ -9,16 +9,16 @@ int main(const int argc, char** argv) {
   matrix_print(M);
   putchar('\n');
   
-  unsigned* ord = get_c1p_order(M);
+  unsigned* ord = get_circ1p_order(M);
 
   if (NULL != ord) {
-    printf("\nC1P\n");
+    printf("\nCirc1P\n");
     order_print(ord, M->n);
     putchar('\n');
     matrix_print_with_order(M, ord);
   }
   else
-    printf("Non-C1P\n");
+    printf("Non-Circ1P\n");
   
   free(ord); ord = NULL;
     matrix_clear(M);

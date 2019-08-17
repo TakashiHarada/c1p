@@ -13,8 +13,9 @@ struct MATRIX {
 typedef struct MATRIX matrix;
 
 matrix* read_matrix(char*);
-void matrix_print(matrix*);
-void matrix_print_with_order(matrix*, unsigned*);
+matrix* matrix_copy(const matrix*);
+void matrix_print(const matrix*);
+void matrix_print_with_order(const matrix*, const unsigned*);
 void matrix_clear(matrix*);
 
 matrix* read_matrix(char* filename) {
@@ -47,7 +48,24 @@ matrix* read_matrix(char* filename) {
   return M;
 }
 
-void matrix_print(matrix* M) {
+matrix* matrix_copy(const matrix* M) {
+  matrix* N = (matrix*)calloc(1, sizeof(matrix));
+  N->m = M->m;
+  N->n = M->n;
+
+  N->b = (char**)calloc(M->m, sizeof(char*));
+  unsigned i;
+  for (i = 0; i < M->m; ++i) {
+    unsigned j;
+    N->b[i] = (char*)calloc(M->n, sizeof(char));
+    for (j = 0; j < M->n; ++j)
+      N->b[i][j] = M->b[i][j];
+  }
+  
+  return N;
+}
+
+void matrix_print(const matrix* M) {
   unsigned i, j;
   for (i = 0; i < M->m; ++i) {
     for (j = 0; j < M->n; ++j) putchar(M->b[i][j]);
@@ -56,7 +74,7 @@ void matrix_print(matrix* M) {
   }
 }
 
-void matrix_print_with_order(matrix* M, unsigned* s) {
+void matrix_print_with_order(const matrix* M, const unsigned* s) {
   unsigned i;
   for (i = 0; i < M->m; ++i) {
     unsigned j;
@@ -67,9 +85,12 @@ void matrix_print_with_order(matrix* M, unsigned* s) {
 
 void matrix_clear(matrix* M) {
   unsigned i;
-  for (i = 0; i < M->m; ++i)
+  for (i = 0; i < M->m; ++i) {
     free(M->b[i]);
+    M->b[i] = NULL;
+  }
   free(M->b);
+  M->b = NULL;
   free(M);
 }
 
