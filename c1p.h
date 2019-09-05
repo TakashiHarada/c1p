@@ -97,19 +97,36 @@ void element_print(const elem* e, const int i) {
   putchar('\n');
 }
 
+struct PAIR_LIST_UNSGINED {
+  list_unsigned* first;
+  list_unsigned* second;
+};
+typedef struct PAIR_LIST_UNSGINED pair_list_unsigned;
+
+void pair_list_unsigned_clear(pair_list_unsigned*);
+
+void pair_list_unsigned_clear(pair_list_unsigned* P) {
+  list_unsigned_clear(P->first); P->first = NULL;
+  list_unsigned_clear(P->second); P->second = NULL;
+}
+
 unsigned* get_c1p_order(matrix*);
 class* init_class(matrix*);
 elem* init_element(matrix*);
 void set_p0(const adjacency_list*, const unsigned, class*, elem*);
 void refine(class*, elem*, const list_unsigned*, const unsigned);
-list_unsigned* intersection_SandT(elem*, const list_unsigned*);
-list_unsigned* intersection_piAndT(elem*, const int, const list_unsigned*);
+list_unsigned* intersection_SandT(const elem*, const list_unsigned*);
+pair_list_unsigned* split(elem*, const list_unsigned*);
 unsigned check_cases(const list_unsigned*, const list_unsigned*);
-void refine_sub(class*, elem*, const list_unsigned*, const list_unsigned*, const unsigned, const unsigned);
-void insert_new_class(class*, elem*, const list_unsigned*, const unsigned);
+unsigned check_cases_in_3(const elem*, const list_unsigned*);
+void refine_sub(class*, elem*, const list_unsigned*, const pair_list_unsigned*, const unsigned, const unsigned);
+void insert_new_class(class*, elem*, const list_unsigned*, const int);
 void refine_2(class*, elem*, const list_unsigned*, const unsigned);
+void refine_3_a(class*, elem*, const pair_list_unsigned*, const unsigned);
 void refine_class(class*, elem*, const unsigned, const int);
 void update_class(class*, elem*, const unsigned, const unsigned*);
+void update_class_3(class*, elem*, const unsigned, const unsigned*);
+void clear_counter(class*);
 void partition_print(const class*, const elem*);
 
 
@@ -217,9 +234,6 @@ unsigned* get_c1p_order(matrix* M) {
   	/*   return NULL; */
     	/* } */
       }
-      /* reset_do_intersect_P(P[k]); */
-      /* reset_do_intersect_rows(r[p->key]); */
-      /* reset_class_counter(P[k]); */
     }
     list_unsigned_clear(L); L = NULL;
   }
@@ -229,17 +243,21 @@ unsigned* get_c1p_order(matrix* M) {
   return order;
 }
 
-list_unsigned* intersection_piAndT(elem* e, const int i, const list_unsigned* T) {
-  list_unsigned* L = (list_unsigned*)calloc(1, sizeof(list_unsigned));
+pair_list_unsigned* split(elem* e, const list_unsigned* T) {
+  pair_list_unsigned* p = (pair_list_unsigned*)calloc(1, sizeof(pair_list_unsigned));
+  list_unsigned* F = (list_unsigned*)calloc(1, sizeof(list_unsigned));
+  list_unsigned* S = (list_unsigned*)calloc(1, sizeof(list_unsigned));
   list_unsigned_cell* ptr;
   for (ptr = T->head; NULL != ptr; ptr = ptr->next)
-    if (i == e[ptr->key].b)
-      list_unsigned_add_rear(L, ptr->key);
-  
-  return L;
+    if (-1 != e[ptr->key].b)
+      list_unsigned_add_rear(F, ptr->key);
+    else
+      list_unsigned_add_rear(S, ptr->key);
+  p->first = F, p->second = S;
+  return p;
 }
 
-list_unsigned* intersection_SandT(elem* e, const list_unsigned* T) {
+list_unsigned* intersection_SandT(const elem* e, const list_unsigned* T) {
   list_unsigned* L = (list_unsigned*)calloc(1, sizeof(list_unsigned));
   list_unsigned_cell* ptr;
   for (ptr = T->head; NULL != ptr; ptr = ptr->next)
@@ -259,41 +277,77 @@ unsigned check_cases(const list_unsigned* T, const list_unsigned* SandT) {
   return 3;
 }
 
-void refine_sub(class* c, elem* e, const list_unsigned* T, const list_unsigned* SandT, const unsigned case_number, const unsigned n) {
+unsigned check_cases_in_3(const elem* e, const list_unsigned* SandT) {
+  list_unsigned_cell* ptr;
+  for (ptr = SandT->head; NULL != ptr; ptr = ptr->next)
+    if (e[ptr->key].b != (int)cls_ptr_h)
+      return 2;
+  return 1;
+}
+
+void refine_sub(class* c, elem* e, const list_unsigned* T, const pair_list_unsigned* ST, const unsigned case_number, const unsigned n) {
+  unsigned cc3;
   switch (case_number) {
   case 1: // このケースは C1P 判定では起こりえない（はず）CONFIRMME
     insert_new_class(c, e, T, cls_ptr_t);
     break;
   case 2:
-    refine_2(c, e, SandT, n);
+    refine_2(c, e, ST->first, n);
     break;
   default:
-    refine_2(c, e, SandT, n);
+    cc3 = check_cases_in_3(e, ST->first);
+    printf("case [%d]\n", cc3);
+    switch (cc3) {
+    case 1:
+      refine_3_a(c, e, ST, n);
+      break;
+    default:
+      refine_2(c, e, ST->first, n);
+      break;
+    }
   }
 }
 
-void insert_new_class(class* c, elem* e, const list_unsigned* T, const unsigned i) {
+void insert_new_class(class* c, elem* e, const list_unsigned* T, const int i) {
   ++MAX_CLASS_NUMBER;
-  const int prev = i;
-  const int next = c[i].n;
-  c[MAX_CLASS_NUMBER].p = prev;
-  c[MAX_CLASS_NUMBER].n = next;
-  c[prev].n = MAX_CLASS_NUMBER;
-  if (-1 != next)
-    c[next].p = MAX_CLASS_NUMBER;
+
+  if (-1 == i) {
+    c[MAX_CLASS_NUMBER].n = cls_ptr_h;
+    c[MAX_CLASS_NUMBER].p = -1;
+    c[cls_ptr_h].p = MAX_CLASS_NUMBER;
+    cls_ptr_h = MAX_CLASS_NUMBER;
+  }
+  else {
+    const int prev = i;
+    const int next = c[i].n;
+    c[MAX_CLASS_NUMBER].p = prev;
+    c[MAX_CLASS_NUMBER].n = next;
+    c[prev].n = MAX_CLASS_NUMBER;
+    if (-1 != next)
+      c[next].p = MAX_CLASS_NUMBER;
+  }
   
   list_unsigned_cell* ptr = T->head;
-  unsigned j, k;
-  k = ptr->key;
+  unsigned k = ptr->key;;
   c[MAX_CLASS_NUMBER].h = c[MAX_CLASS_NUMBER].t = k;
   c[MAX_CLASS_NUMBER].s = 1;
+  int prev = -1;
+  if (-1 != i)
+    prev = e[k].p;
+  element_remove(e, k);
+  element_insert(e, prev, k);
+  e[k].b = MAX_CLASS_NUMBER;
+  prev = e[k].p;
+  
   for (ptr = ptr->next; NULL != ptr; ptr = ptr->next) {
-    j = k;
     k = ptr->key;
-    e[j].n = k;
+    element_remove(e, k);
+    /* e[j].n = k; */
+    element_insert(e, prev, k);
     e[k].b = MAX_CLASS_NUMBER;
     c[MAX_CLASS_NUMBER].s += 1;
     c[MAX_CLASS_NUMBER].t = k;
+    prev = e[k].p;
   }
 }
 
@@ -312,6 +366,10 @@ void refine_class(class* c, elem* e, const unsigned k, const int cls_num) {
     elem_ptr_h = k;
   c[cls_num].h = k;
   e[k].b = cls_num;
+}
+
+void clear_counter(class* c) {
+  c->counter = 0;
 }
 
 void update_class(class* c, elem* e, const unsigned cls_num, const unsigned* le) {
@@ -361,9 +419,65 @@ void refine_2(class* c, elem* e, const list_unsigned* T, const unsigned n) {
   for (ptr = refined_class->head; NULL != ptr; ptr = ptr->next)
     update_class(c, e, ptr->key, refined_last_element);
 
-  partition_print(c, e);
+  /* partition_print(c, e); */
   for (ptr = refined_class->head; NULL != ptr; ptr = ptr->next)
-    ; /* clear_counter(); */
+    clear_counter(&(c[ptr->key]));
+  
+  free(refined_class_flag); refined_class_flag = NULL;
+  free(refined_last_element); refined_last_element = NULL;
+  list_unsigned_clear(refined_class); refined_class = NULL;
+}
+
+void update_class_3(class* c, elem* e, const unsigned cls_num, const unsigned* le) {
+  if (c[cls_num].s == c[cls_num].counter)
+    return;
+  ++MAX_CLASS_NUMBER;
+
+  int i = c[cls_num].h;
+  e[i].b = MAX_CLASS_NUMBER;
+  c[MAX_CLASS_NUMBER].h = c[MAX_CLASS_NUMBER].t = i;
+  if ((int)le[cls_num] != i) {
+    for ( ; (int)le[cls_num] != i; i = e[i].n) {
+      e[i].b = MAX_CLASS_NUMBER;
+      c[MAX_CLASS_NUMBER].t = i;
+    }
+    e[i].b = MAX_CLASS_NUMBER;
+    c[MAX_CLASS_NUMBER].t = i;
+  }
+  i = e[i].n;
+  c[cls_num].h = i;
+
+  class_insert(c, -1, MAX_CLASS_NUMBER);
+}
+
+void refine_3_a(class* c, elem* e, const pair_list_unsigned* ST, const unsigned n) {
+  list_unsigned* refined_class = (list_unsigned*)calloc(1, sizeof(list_unsigned));
+  bool* refined_class_flag = (bool*)calloc(n, sizeof(bool));
+  unsigned* refined_last_element = (unsigned*)calloc(n, sizeof(unsigned));
+
+  element_print(e, elem_ptr_h);
+  list_unsigned_cell* ptr;
+  for (ptr = ST->first->head; NULL != ptr; ptr = ptr->next) {
+    int cls_num = e[ptr->key].b;
+    c[cls_num].counter += 1;
+    if (!refined_class_flag[cls_num]) {
+      list_unsigned_add_rear(refined_class, cls_num);
+      refined_last_element[cls_num] = ptr->key;
+      refined_class_flag[cls_num] = true;
+    }
+    refine_class(c, e, ptr->key, cls_num);
+    element_print(e, elem_ptr_h);
+  }
+
+  for (ptr = refined_class->head; NULL != ptr; ptr = ptr->next)
+    update_class_3(c, e, ptr->key, refined_last_element);
+
+  /* partition_print(c, e); */
+  for (ptr = refined_class->head; NULL != ptr; ptr = ptr->next)
+    clear_counter(&(c[ptr->key]));
+
+  /* list_unsigned_print(ST->second); putchar('\n'); */
+  insert_new_class(c, e, ST->second, -1);
   
   free(refined_class_flag); refined_class_flag = NULL;
   free(refined_last_element); refined_last_element = NULL;
@@ -371,12 +485,16 @@ void refine_2(class* c, elem* e, const list_unsigned* T, const unsigned n) {
 }
 
 void refine(class* c, elem* e, const list_unsigned* T, const unsigned n) {
-  list_unsigned* sINTt = intersection_SandT(e, T);
-  /* list_unsigned_print(sINTt); putchar('\n'); */
-  const unsigned cc = check_cases(T, sINTt);
+  pair_list_unsigned* ST = split(e, T);
+  const unsigned cc = check_cases(T, ST->first);
+  
   printf("case %d\n", cc);
-
-  refine_sub(c, e, T, sINTt, cc, n);
+  /* partition_print(c,e); */
+  
+  refine_sub(c, e, T, ST, cc, n);
+  partition_print(c, e);
+  element_print(e, elem_ptr_h);
+  pair_list_unsigned_clear(ST);
 }  
 
 void partition_print(const class* c, const elem* e) {
