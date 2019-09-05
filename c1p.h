@@ -22,11 +22,62 @@ struct CLASS {
 };
 typedef struct CLASS class;
 
+unsigned MAX_CLASS_NUMBER;
+unsigned cls_ptr_h;
+unsigned cls_ptr_t;
+
+
 struct ELEMENT {
   int b; // which class this element belongs to
   int n; // next element
+  int p; // previous element
 };
 typedef struct ELEMENT elem;
+
+unsigned elem_ptr_h;
+
+void element_insert(elem*, const int, const int);
+void element_remove(elem*, const int);
+void element_print(const elem*, const int);
+
+// insert 'i' next to the e[ptr]
+// It is possible to i become to -1.
+void element_insert(elem* e, const int ptr, const int i) {
+  if (-1 == ptr) {
+    e[i].n = elem_ptr_h;
+    e[i].p = -1;
+    e[elem_ptr_h].p = i;
+    elem_ptr_h = i;
+  }
+  else {
+    e[i].n = e[ptr].n;
+    e[i].p = ptr;
+    e[ptr].n = i;
+    if (-1 != e[i].n)
+      e[e[i].n].p = i;
+  }
+}
+
+void element_remove(elem* e, const int i) {
+  if (-1 != e[i].p)
+    e[e[i].p].n = e[i].n;
+  if (-1 != e[i].n)
+    e[e[i].n].p = e[i].p;
+  if (-1 == e[i].p)
+    elem_ptr_h = e[i].n;
+  e[i].b = -1;
+  e[i].n = -1;
+  e[i].p = -1;
+}
+
+void element_print(const elem* e, const int i) {
+  printf("%d", i);
+  int j = e[i].n;
+  for ( ; -1 != j; j = e[j].n)
+    printf(" --> %d", j);
+  putchar('\n');
+}
+
 
 struct LEFT_RIGHT {
   unsigned l;
@@ -34,9 +85,6 @@ struct LEFT_RIGHT {
 };
 typedef struct LEFT_RIGHT lr;
 
-unsigned MAX_CLASS_NUMBER;
-unsigned cls_ptr_h;
-unsigned cls_ptr_t;
 
 unsigned* get_c1p_order(matrix*);
 class* init_class(matrix*);
@@ -55,11 +103,14 @@ void partition_print(const class*, const elem*);
 
 elem* init_element(matrix* M) {
   elem* e = (elem*)calloc(M->n, sizeof(elem));
-  unsigned i;
-  for (i = 0; i < M->n; ++i) {
+  int i;
+  for (i = 0; (unsigned)i < M->n; ++i) {
     e[i].b = -1;
-    e[i].n = -1;
+    e[i].p = i-1;
+    e[i].n = i+1;
   }
+  e[M->n-1].n = -1;
+  elem_ptr_h = 0;
   return e;
 }
 
@@ -82,20 +133,26 @@ class* init_class(matrix* M) {
 
 void set_p0(const adjacency_list* M, const unsigned i, class* c, elem* e) {
   list_unsigned_cell* p;
-  unsigned j, k;
+  unsigned k;
   p = M->r[i]->head;
   k = p->key;
   c[cls_ptr_h].h = c[cls_ptr_h].t = k;
   c[cls_ptr_h].s = 1;
-  e[k].b = cls_ptr_h;
+  element_remove(e, k);
+  element_insert(e, -1, k);
+  e[k].b = 0;
+  /* printf("e[%d].b = %d\n", k, cls_ptr_h); */
+  /* element_print(e, elem_ptr_h); */
   for (p = p->next; NULL != p; p = p->next) {
-    j = k;
     k = p->key;
-    e[j].n = k;
-    e[k].b = cls_ptr_h;
+    element_remove(e, k);
+    element_insert(e, -1, k);
+    e[k].b = 0;
+    /* printf("element_ptr_h = %d\n", elem_ptr_h); */
     c[cls_ptr_h].s += 1;
     c[cls_ptr_h].t = k;
-    /* printf("%d \n", p->key); */
+    /* printf("e[%d].b = %d\n", k, cls_ptr_h); */
+    /* element_print(e, elem_ptr_h); */
   }
   MAX_CLASS_NUMBER = cls_ptr_h = cls_ptr_t = 0;
 }
@@ -108,7 +165,8 @@ unsigned* get_c1p_order(matrix* M) {
 
   class* c = init_class(M);
   elem* e = init_element(M);
-  
+  /* element_print(e, 0); */
+
   adjacency_list* Ma = matrix2adjacency_list(M);
   /* adjacency_list_print(Ma); */
 					     
@@ -116,8 +174,6 @@ unsigned* get_c1p_order(matrix* M) {
 
   unsigned num_c = G->num_of_components;
   printf("#component = %d\n", num_c);
-
-  
   
   unsigned k;
   for (k = 0; k < num_c; ++k) {
@@ -129,8 +185,11 @@ unsigned* get_c1p_order(matrix* M) {
 
     list_unsigned_cell* p = L->head;
     set_p0(Ma, p->key, c, e);
-    partition_print(c, e);
+    /* element_print(e, p->key); */
+    /* partition_print(c, e); */
 
+    return NULL;
+    
     for (p = p->next; NULL != p; p = p->next) {
       if (1 < Ma->r[p->key]->size) {
     	lr lr = refine(c, e, Ma->r[p->key]);
@@ -264,10 +323,11 @@ void partition_print(const class* c, const elem* e) {
   int i = cls_ptr_h;
   while (-1 != i) {
     int j = c[i].h;
-    printf("{ %d", j);
+    printf("{ %d(%d)", j, e[j].b);
     j = e[j].n;
-    while (-1 != j) {
-      printf(", %d", j);
+    /* while (-1 != j) { */
+    while (i == e[j].b) {
+      printf(", %d(%d)", j, e[j].b);
       j = e[j].n;
     }
     printf(" }\n");
