@@ -135,7 +135,6 @@ void update_class_3(class*, elem*, const unsigned, const unsigned*);
 void clear_counter(class*);
 void partition_print(const class*, const elem*);
 
-
 elem* init_element(matrix* M) {
   elem* e = (elem*)calloc(M->n, sizeof(elem));
   int i;
@@ -193,8 +192,52 @@ void set_p0(const adjacency_list* M, const unsigned i, class* c, elem* e) {
   MAX_CLASS_NUMBER = cls_ptr_h = cls_ptr_t = 0;
 }
 
-unsigned most_left;
-unsigned most_right;
+int most_left;
+int most_right;
+int CASES;
+
+bool is_consecutive(const class*, const elem* e, const list_unsigned*, const unsigned);
+
+bool is_consecutive(const class* c, const elem* e, const list_unsigned* T, const unsigned n) { // FIXME
+  if (1 == CASES)
+    return true;
+
+  list_unsigned* intersect = (list_unsigned*)calloc(n, sizeof(list_unsigned));
+  bool* intflag = (bool*)calloc(n, sizeof(bool));
+  list_unsigned_cell* ptr;
+
+  for (ptr = T->head; NULL != ptr; ptr = ptr->next)
+    if (!intflag[e[ptr->key].b]) {
+      list_unsigned_add_rear(intersect, e[ptr->key].b);
+      intflag[e[ptr->key].b] = true;
+    }
+
+  int i;
+  for (i = cls_ptr_h; -1 != i; i = c[i].n) {
+    /* printf("cls_num = %d\n", i); */
+    if (intflag[i]) {
+      most_right = i;
+      if (-1 == most_left)
+	most_left = i;
+    }
+  }
+
+  /* list_unsigned_print(T); putchar('\n'); */
+  /* partition_print(c, e); */
+  /* printf("left = %d, right = %d\n", most_left, most_right); */
+
+  bool flag = true;
+  for (i = most_left; i != c[most_right].n; i = c[i].n)
+    if (!intflag[i]) {
+      flag = false;
+      break;
+    }
+  
+  free(intflag); intflag = NULL;
+  list_unsigned_clear(intersect); intersect = NULL;
+  
+  return flag;
+}
 
 unsigned* get_c1p_order(matrix* M) {
 
@@ -232,15 +275,14 @@ unsigned* get_c1p_order(matrix* M) {
     
     for ( ; NULL != p; p = p->next) {
       if (1 < Ma->r[p->key]->size) {
+	CASES = most_left = most_right = -1;
     	refine(c, e, Ma->r[p->key], Ma->n);
-    	/* if (!is_consecutive(lr)) { */
-    	/*   /\* printf("Input Matrix has non-C1P\n"); *\/ */
-  	/*   partitions_clear(P, num_c); */
-  	/*   list_rows_clear(r, M->m); */
-  	/*   columns_clear(Col); */
-  	/*   graph_clear(G); */
-  	/*   return NULL; */
-    	/* } */
+    	if (!is_consecutive(c, e, Ma->r[p->key], Ma->n)) {
+    	  printf("Input Matrix iss non-C1P\n");
+	  adjacency_list_clear(Ma); Ma = NULL;
+  	  graph_clear(G);
+  	  return NULL;
+    	}
       }
     }
     list_unsigned_clear(L); L = NULL;
@@ -322,6 +364,7 @@ void refine_sub(class* c, elem* e, const pair_list_unsigned* ST, const unsigned 
   switch (case_number) {
   case 1:
     insert_new_class(c, e, ST->second, cls_ptr_t);
+    most_left = most_right = MAX_CLASS_NUMBER;
     break;
   case 2:
     /* list_unsigned_print(ST->first); putchar('\n'); */
@@ -538,6 +581,7 @@ void refine_3_b(class* c, elem* e, const pair_list_unsigned* ST, const unsigned 
 void refine(class* c, elem* e, const list_unsigned* T, const unsigned n) {
   pair_list_unsigned* ST = split(e, T);
   const unsigned cc = check_cases(T, ST->first);
+  CASES = cc;
   
   /* printf("case %d\n", cc); */
   /* partition_print(c,e); putchar('\n'); */
