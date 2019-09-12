@@ -196,45 +196,71 @@ int most_left;
 int most_right;
 int CASES;
 
-bool is_consecutive(const class*, const elem* e, const list_unsigned*, const unsigned);
+bool is_consecutive(class*, const elem* e, const list_unsigned*);
 
-bool is_consecutive(const class* c, const elem* e, const list_unsigned* T, const unsigned n) { // FIXME
+bool is_consecutive(class* c, const elem* e, const list_unsigned* T) { // FIXME
   if (1 == CASES)
     return true;
 
-  list_unsigned* intersect = (list_unsigned*)calloc(n, sizeof(list_unsigned));
-  bool* intflag = (bool*)calloc(n, sizeof(bool));
-  list_unsigned_cell* ptr;
+  /* list_unsigned* intersect = (list_unsigned*)calloc(n, sizeof(list_unsigned)); */
+  /* bool* intflag = (bool*)calloc(n, sizeof(bool)); */
+  /* list_unsigned_cell* ptr; */
 
-  for (ptr = T->head; NULL != ptr; ptr = ptr->next)
-    if (!intflag[e[ptr->key].b]) {
-      list_unsigned_add_rear(intersect, e[ptr->key].b);
-      intflag[e[ptr->key].b] = true;
-    }
+  /* for (ptr = T->head; NULL != ptr; ptr = ptr->next) */
+  /*   if (!intflag[e[ptr->key].b]) { */
+  /*     list_unsigned_add_rear(intersect, e[ptr->key].b); */
+  /*     intflag[e[ptr->key].b] = true; */
+  /*   } */
 
-  int i;
-  for (i = cls_ptr_h; -1 != i; i = c[i].n) {
-    /* printf("cls_num = %d\n", i); */
-    if (intflag[i]) {
-      most_right = i;
-      if (-1 == most_left)
-	most_left = i;
-    }
-  }
+  /* int i; */
+  /* for (i = cls_ptr_h; -1 != i; i = c[i].n) { */
+  /*   /\* printf("cls_num = %d\n", i); *\/ */
+  /*   if (intflag[i]) { */
+  /*     most_right = i; */
+  /*     if (-1 == most_left) */
+  /* 	most_left = i; */
+  /*   } */
+  /* } */
 
   /* list_unsigned_print(T); putchar('\n'); */
-  /* partition_print(c, e); */
-  /* printf("left = %d, right = %d\n", most_left, most_right); */
+  /* partition_print(c, e);  */
+  /* printf("##########################\n"); */
 
-  bool flag = true;
-  for (i = most_left; i != c[most_right].n; i = c[i].n)
-    if (!intflag[i]) {
-      flag = false;
-      break;
-    }
+  list_unsigned_cell* p;
+  for (p = T->head; NULL != p; p = p->next)
+    c[e[p->key].b].counter += 1;
   
-  free(intflag); intflag = NULL;
-  list_unsigned_clear(intersect); intersect = NULL;
+  list_unsigned_cell* ptr = T->head;
+  
+  int i;
+  unsigned sum = 0;
+  for (i = e[ptr->key].b; -1 != i && 0 != c[i].counter; i = c[i].p)
+    sum += c[i].counter;
+
+  i = e[ptr->key].b;
+  for (i = c[i].n; -1 != i && 0 != c[i].counter; i = c[i].n)
+    sum += c[i].counter;
+
+  /* printf("sum = %d\n", sum); */
+  /* /\* printf("left = %d, right = %d\n", most_left, most_right); *\/ */
+
+  for (ptr = T->head; NULL != ptr; ptr = ptr->next)
+    c[e[ptr->key].b].counter = 0;
+
+  if (T->size == sum)
+    return true;
+
+  return false;
+  
+  bool flag = true;
+  /* for (i = most_left; i != c[most_right].n; i = c[i].n) */
+  /*   if (!intflag[i]) { */
+  /*     flag = false; */
+  /*     break; */
+  /*   } */
+  
+  /* free(intflag); intflag = NULL; */
+  /* list_unsigned_clear(intersect); intersect = NULL; */
   
   return flag;
 }
@@ -277,8 +303,8 @@ unsigned* get_c1p_order(matrix* M) {
       if (1 < Ma->r[p->key]->size) {
 	CASES = most_left = most_right = -1;
     	refine(c, e, Ma->r[p->key], Ma->n);
-    	if (!is_consecutive(c, e, Ma->r[p->key], Ma->n)) {
-    	  printf("Input Matrix iss non-C1P\n");
+    	if (!is_consecutive(c, e, Ma->r[p->key])) {
+    	  printf("Input Matrix is non-C1P\n");
 	  adjacency_list_clear(Ma); Ma = NULL;
   	  graph_clear(G);
   	  return NULL;
