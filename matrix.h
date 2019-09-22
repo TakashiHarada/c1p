@@ -94,4 +94,51 @@ void matrix_clear(matrix* M) {
   free(M);
 }
 
+
+struct ADJACENCY_LIST {
+  unsigned m; // number of rows
+  unsigned n; // number of columns
+  list_unsigned** r;
+};
+typedef struct ADJACENCY_LIST adjacency_list;
+
+adjacency_list* matrix2adjacency_list(const matrix*);
+void adjacency_list_clear(adjacency_list*);
+void adjacency_list_print(adjacency_list*);
+
+adjacency_list* matrix2adjacency_list(const matrix* M) {
+  adjacency_list* N = (adjacency_list*)calloc(1, sizeof(adjacency_list));
+  N->m = M->m;
+  N->n = M->n;
+  N->r = (list_unsigned**)calloc(M->m, sizeof(list_unsigned*));
+  unsigned i;
+  for (i = 0; i < M->m; ++i) {
+    N->r[i] = (list_unsigned*)calloc(1, sizeof(list_unsigned));
+    unsigned j;
+    for (j = 0; j < M->n; ++j)
+      if ('1' == M->b[i][j])
+	list_unsigned_add_rear(N->r[i], j);
+  }
+  return N;
+}
+
+void adjacency_list_print(adjacency_list* M) {
+  unsigned i;
+  for (i = 0; i < M->m; ++i) {
+    printf("N(%d) : ", i);
+    list_unsigned_print(M->r[i]);
+    putchar('\n');
+  }
+}
+
+void adjacency_list_clear(adjacency_list* M) {
+  unsigned i;
+  for (i = 0; i < M->m; ++i) {
+    list_unsigned_clear(M->r[i]);
+    M->r[i] = NULL;
+  }
+  free(M->r);
+  M->r = NULL;
+}
+
 #endif
