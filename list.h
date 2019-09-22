@@ -63,10 +63,10 @@ list_unsigned_cell* list_unsigned_search(list_unsigned* L, unsigned u) {
 }
 
 void list_unsigned_add_front(list_unsigned* L, unsigned u) {
-  list_unsigned_cell* new = (list_unsigned_cell*)malloc(sizeof(list_unsigned_cell));
+  list_unsigned_cell* neu = (list_unsigned_cell*)malloc(sizeof(list_unsigned_cell));
   L->size = L->size + 1;
-  new->key = u;
-  list_unsigned_add_front_sub(L,new);
+  neu->key = u;
+  list_unsigned_add_front_sub(L,neu);
 }
 
 void list_unsigned_add_front_sub(list_unsigned* L, list_unsigned_cell* x) {
@@ -78,10 +78,10 @@ void list_unsigned_add_front_sub(list_unsigned* L, list_unsigned_cell* x) {
 }
 
 void list_unsigned_add_rear(list_unsigned* L, unsigned u) {
-  list_unsigned_cell* new = (list_unsigned_cell*)malloc(sizeof(list_unsigned_cell));
+  list_unsigned_cell* neu = (list_unsigned_cell*)malloc(sizeof(list_unsigned_cell));
   L->size = L->size + 1;
-  new->key = u;
-  list_unsigned_add_rear_sub(L,new);
+  neu->key = u;
+  list_unsigned_add_rear_sub(L,neu);
 }
 
 void list_unsigned_add_rear_sub(list_unsigned* L, list_unsigned_cell* x) {
@@ -189,19 +189,19 @@ void list_unsigned_print(list_unsigned* L) {
 /* } */
 
 /* void list_pair_unsigned_insert2(list_pair_unsigned* L, pair_unsigned p) { */
-/*   list_pair_unsigned_cell* new = (list_pair_unsigned_cell*)malloc(sizeof(list_pair_unsigned_cell)); */
+/*   list_pair_unsigned_cell* neu = (list_pair_unsigned_cell*)malloc(sizeof(list_pair_unsigned_cell)); */
 /*   L->size = L->size + 1; */
-/*   new->pu.first = p.first; */
-/*   new->pu.second = p.second; */
-/*   list_pair_unsigned_insert_sub(L,new); */
+/*   neu->pu.first = p.first; */
+/*   neu->pu.second = p.second; */
+/*   list_pair_unsigned_insert_sub(L,neu); */
 /* } */
 
 /* void list_pair_unsigned_insert(list_pair_unsigned* L, unsigned f, unsigned s) { */
-/*   list_pair_unsigned_cell* new = (list_pair_unsigned_cell*)malloc(sizeof(list_pair_unsigned_cell)); */
+/*   list_pair_unsigned_cell* neu = (list_pair_unsigned_cell*)malloc(sizeof(list_pair_unsigned_cell)); */
 /*   L->size = L->size + 1; */
-/*   new->pu.first = f; */
-/*   new->pu.second = s; */
-/*   list_pair_unsigned_insert_sub(L,new); */
+/*   neu->pu.first = f; */
+/*   neu->pu.second = s; */
+/*   list_pair_unsigned_insert_sub(L,neu); */
 /* } */
 
 /* void list_pair_unsigned_insert_sub(list_pair_unsigned* L, list_pair_unsigned_cell* x) { */
@@ -300,12 +300,12 @@ void list_unsigned_print(list_unsigned* L) {
 /* } */
 
 /* void list_string_insert(list_string* L, char* s) { */
-/*   list_string_cell* new = (list_string_cell*)malloc(sizeof(list_string_cell)); */
+/*   list_string_cell* neu = (list_string_cell*)malloc(sizeof(list_string_cell)); */
 /*   L->size = L->size + 1; */
 /*   unsigned l = strlen(s); */
-/*   new->key = (char*)calloc(l+1, sizeof(char)); */
-/*   strcpy(new->key, s); */
-/*   list_string_insert_sub(L,new); */
+/*   neu->key = (char*)calloc(l+1, sizeof(char)); */
+/*   strcpy(neu->key, s); */
+/*   list_string_insert_sub(L,neu); */
 /* } */
 
 /* void list_string_insert_sub(list_string* L, list_string_cell* x) { */
