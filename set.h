@@ -15,7 +15,7 @@ typedef enum { red, black } color;
 
 /* unsigned */
 struct UNSIGNED_NODE {
-  color color;
+  color c;
   unsigned key;
   struct UNSIGNED_NODE* p;
   struct UNSIGNED_NODE* left;
@@ -83,7 +83,7 @@ bool set_unsigned_equal(set_unsigned* S, set_unsigned* T) {
 void set_unsigned_init(set_unsigned* T) {
   T->size = 0;
   T->nil = (unsigned_node*)calloc(1, sizeof(unsigned_node));
-  T->nil->color = black;
+  T->nil->c = black;
   T->root = T->nil;
 }
 
@@ -165,22 +165,22 @@ void set_unsigned_insert_sub(set_unsigned* T, unsigned_node* z) {
   else { y->right = z; }
   z->left = T->nil;
   z->right = T->nil;
-  z->color = red;
+  z->c = red;
   set_instert_fixup_unsigned(T, z);
 }
 
 void set_instert_fixup_unsigned(set_unsigned* T, unsigned_node* z) {
   unsigned_node* y;
   
-  /* while (z->p != T->nil && red == z->p->color) { */
-  while (red == z->p->color) {
+  /* while (z->p != T->nil && red == z->p->c) { */
+  while (red == z->p->c) {
     if (z->p == z->p->p->left) {
       y = z->p->p->right;
-      /* if (T->nil != y && red == y->color) { /\* case 1 *\/ */
-      if (red == y->color) { /* case 1 */
-	z->p->color = black;
-	y->color = black;
-	z->p->p->color = red;
+      /* if (T->nil != y && red == y->c) { /\* case 1 *\/ */
+      if (red == y->c) { /* case 1 */
+	z->p->c = black;
+	y->c = black;
+	z->p->p->c = red;
 	z = z->p->p;
       }
       else {
@@ -188,18 +188,18 @@ void set_instert_fixup_unsigned(set_unsigned* T, unsigned_node* z) {
 	  z = z->p;
 	  left_lotate_unsigned(T,z);
 	}
-	z->p->color = black; /* case 3 */
-	z->p->p->color = red;
+	z->p->c = black; /* case 3 */
+	z->p->p->c = red;
 	right_lotate_unsigned(T,z->p->p);
       }
     }
     else {
       y = z->p->p->left;
-      /* if (T->nil != y && red == y->color) { */
-      if (red == y->color) {
-	z->p->color = black;
-	y->color = black;
-	z->p->p->color = red;
+      /* if (T->nil != y && red == y->c) { */
+      if (red == y->c) {
+	z->p->c = black;
+	y->c = black;
+	z->p->p->c = red;
 	z = z->p->p;
       }
       else {
@@ -207,13 +207,13 @@ void set_instert_fixup_unsigned(set_unsigned* T, unsigned_node* z) {
 	  z = z->p;
 	  right_lotate_unsigned(T,z);
 	}
-	z->p->color = black;
-	z->p->p->color = red;
+	z->p->c = black;
+	z->p->p->c = red;
 	left_lotate_unsigned(T,z->p->p);
       }
     }
   }
-  T->root->color = black;
+  T->root->c = black;
 }
 
 void set_transplant_unsigned(set_unsigned* T, unsigned_node* u, unsigned_node* v) {
@@ -233,7 +233,7 @@ void set_unsigned_delete(set_unsigned* T, unsigned v) {
 
 void set_delete_unsigned_sub(set_unsigned* T, unsigned_node* z) {
   unsigned_node *x, *y = z;
-  color y_original_color = y->color;
+  color y_original_color = y->c;
   if (z->left == T->nil) {
     x = z->right;
     set_transplant_unsigned(T,z,z->right);
@@ -243,7 +243,7 @@ void set_delete_unsigned_sub(set_unsigned* T, unsigned_node* z) {
     set_transplant_unsigned(T,z,z->left);
   } else {
     y = tree_minimum_unsigned(T->nil, z->right);
-    y_original_color = y->color;
+    y_original_color = y->c;
     x = y->right;
     if (y->p == z) { x->p = y; }
     else {
@@ -254,68 +254,68 @@ void set_delete_unsigned_sub(set_unsigned* T, unsigned_node* z) {
     set_transplant_unsigned(T,z,y);
     y->left = z->left;
     y->left->p = y;
-    y->color = z->color;
+    y->c = z->c;
   }
   if (black == y_original_color) { set_delete_fixup_unsigned(T,x); }
 }
 
 void set_delete_fixup_unsigned(set_unsigned* T, unsigned_node* x) {
   unsigned_node* w;
-  while (x != T->root && black == x->color) {
+  while (x != T->root && black == x->c) {
     if (x == x->p->left) {
       w = x->p->right;
-      if (red == w->color) {
-	w->color = black;
-	x->p->color = red;
+      if (red == w->c) {
+	w->c = black;
+	x->p->c = red;
 	left_lotate_unsigned(T,x->p);
 	w = x->p->right;
       }
-      if (black == w->left->color && black == w->right->color) {
-	w->color = red;
+      if (black == w->left->c && black == w->right->c) {
+	w->c = red;
 	x = x->p;
       }
       else {
-	if (black == w->right->color) {
-	  w->left->color = black;;
-	  w->color = red;
+	if (black == w->right->c) {
+	  w->left->c = black;;
+	  w->c = red;
 	  right_lotate_unsigned(T,w);
 	  w = x->p->right;
 	}
-	w->color = x->p->color;
-	x->p->color = black;
-	w->right->color = black;
+	w->c = x->p->c;
+	x->p->c = black;
+	w->right->c = black;
 	left_lotate_unsigned(T,x->p);
 	x = T->root;
       }
     }
     else {
       w = x->p->left;
-      if (red == w->color) {
-	w->color = black;
-	x->p->color = red;
+      if (red == w->c) {
+	w->c = black;
+	x->p->c = red;
 	right_lotate_unsigned(T,x->p);
 	w = x->p->left;
       }
-      if (black == w->right->color && black == w->left->color) {
-	w->color = red;
+      if (black == w->right->c && black == w->left->c) {
+	w->c = red;
 	x = x->p;
       }
       else {
-	if (black == w->left->color) {
-	  w->right->color = black;;
-	  w->color = red;
+	if (black == w->left->c) {
+	  w->right->c = black;;
+	  w->c = red;
 	  left_lotate_unsigned(T,w);
 	  w = x->p->left;
 	}
-	w->color = x->p->color;
-	x->p->color = black;
-	w->left->color = black;
+	w->c = x->p->c;
+	x->p->c = black;
+	w->left->c = black;
 	right_lotate_unsigned(T,x->p);
 	x = T->root;
       }
     }
   }
-  x->color = black;
+  x->c = black;
 }
 
 bool set_unsigned_is_empty(set_unsigned* S) { if (NULL == S || S->root == S->nil) { return true; } return false; }
@@ -376,7 +376,7 @@ void set_unsigned_debug_print(unsigned_node* p, unsigned_node* nil, unsigned i) 
   if (nil == p || NULL == p) { return; }
   set_unsigned_debug_print(p->left, nil, i+1);
   set_unsigned_debug_print(p->right, nil, i+1);
-  printf("depth = %d: key = %d -- %d\n", i, p->key, p->color);
+  printf("depth = %d: key = %d -- %d\n", i, p->key, p->c);
 }
 
 void set_unsigned_print(set_unsigned* S) { /* post order */

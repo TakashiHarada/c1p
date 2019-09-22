@@ -14,14 +14,14 @@
 #include <math.h>
 
 struct CLASS {
-  int h; // head of the class
-  int t; // tail of the class
-  int s; // size of the class
-  int n; // next class
-  int p; // previous class
+  int h; // head of the part
+  int t; // tail of the part
+  int s; // size of the part
+  int n; // next part
+  int p; // previous part
   int counter; // for refine procedure
 };
-typedef struct CLASS class;
+typedef struct CLASS part;
 
 unsigned MAX_CLASS_NUMBER;
 unsigned cls_ptr_h;
@@ -29,7 +29,7 @@ unsigned cls_ptr_t;
 
 // insert 'i' next to the e[ptr]
 // It is possible to i become to -1.
-void class_insert(class* c, const int ptr, const int i) {
+void part_insert(part* c, const int ptr, const int i) {
   if (-1 == ptr) {
     c[i].n = cls_ptr_h;
     c[i].p = -1;
@@ -49,7 +49,7 @@ void class_insert(class* c, const int ptr, const int i) {
 
 
 struct ELEMENT {
-  int b; // which class this element belongs to
+  int b; // which part this element belongs to
   int n; // next element
   int p; // previous element
 };
@@ -117,27 +117,27 @@ bool* REFINED_CLASS_FLAG;
 unsigned* REFINED_LAST_ELEMENT;
 
 unsigned* get_c1p_order(matrix*);
-class* init_class(matrix*);
+part* init_part(matrix*);
 elem* init_element(matrix*);
-void set_p0(const adjacency_list*, const unsigned, class*, elem*);
-void refine(class*, elem*, const list_unsigned*, const unsigned);
+void set_p0(const adjacency_list*, const unsigned, part*, elem*);
+void refine(part*, elem*, const list_unsigned*, const unsigned);
 list_unsigned* intersection_SandT(const elem*, const list_unsigned*);
 pair_list_unsigned* split(elem*, const list_unsigned*);
-unsigned* set_order(const class*, const elem*, const unsigned);
+unsigned* set_order(const part*, const elem*, const unsigned);
 unsigned check_cases(const list_unsigned*, const list_unsigned*);
 unsigned check_cases_in_3(const elem*, const list_unsigned*);
 bool check_cases_in_3b(const elem*, const list_unsigned*);
-void refine_sub(class*, elem*, const pair_list_unsigned*, const unsigned, const unsigned);
-void insert_new_class(class*, elem*, const list_unsigned*, const int);
-void refine_2(class*, elem*, const list_unsigned*);
-void refine_3_a(class*, elem*, const pair_list_unsigned*, const unsigned);
-void refine_3_b(class*, elem*, const pair_list_unsigned*);
-void refine_class(class*, elem*, const unsigned, const int);
-/* void update_class(class*, elem*, const unsigned, const unsigned*); */
-void update_class(class*, elem*, const unsigned);
-void update_class_3(class*, elem*, const unsigned, const unsigned*);
-void clear_counter(class*);
-void partition_print(const class*, const elem*);
+void refine_sub(part*, elem*, const pair_list_unsigned*, const unsigned, const unsigned);
+void insert_new_part(part*, elem*, const list_unsigned*, const int);
+void refine_2(part*, elem*, const list_unsigned*);
+void refine_3_a(part*, elem*, const pair_list_unsigned*, const unsigned);
+void refine_3_b(part*, elem*, const pair_list_unsigned*);
+void refine_part(part*, elem*, const unsigned, const int);
+/* void update_part(part*, elem*, const unsigned, const unsigned*); */
+void update_part(part*, elem*, const unsigned);
+void update_part_3(part*, elem*, const unsigned, const unsigned*);
+void clear_counter(part*);
+void partition_print(const part*, const elem*);
 
 elem* init_element(matrix* M) {
   elem* e = (elem*)calloc(M->n, sizeof(elem));
@@ -152,8 +152,8 @@ elem* init_element(matrix* M) {
   return e;
 }
 
-class* init_class(matrix* M) {
-  class* c = (class*)calloc(M->n, sizeof(class));
+part* init_part(matrix* M) {
+  part* c = (part*)calloc(M->n, sizeof(part));
 
   unsigned i;
   for (i = 0; i < M->n; ++i) {
@@ -170,7 +170,7 @@ class* init_class(matrix* M) {
   return c;
 }
 
-void set_p0(const adjacency_list* M, const unsigned i, class* c, elem* e) {
+void set_p0(const adjacency_list* M, const unsigned i, part* c, elem* e) {
   list_unsigned_cell* p;
   unsigned k;
   p = M->r[i]->head;
@@ -200,9 +200,9 @@ int most_left;
 int most_right;
 int CASES;
 
-bool is_consecutive(class*, const elem* e, const list_unsigned*);
+bool is_consecutive(part*, const elem* e, const list_unsigned*);
 
-bool is_consecutive(class* c, const elem* e, const list_unsigned* T) { // FIXME
+bool is_consecutive(part* c, const elem* e, const list_unsigned* T) { // FIXME
   if (1 == CASES)
     return true;
 
@@ -275,7 +275,7 @@ unsigned* get_c1p_order(matrix* M) {
   decomposing_to_connected_components(G);
   /* graph_print(G); */
 
-  class* c = init_class(M);
+  part* c = init_part(M);
   elem* e = init_element(M);
   /* element_print(e, 0); */
 
@@ -332,7 +332,7 @@ unsigned* get_c1p_order(matrix* M) {
   return order;
 }
 
-unsigned* set_order(const class* c, const elem* e, const unsigned n) {
+unsigned* set_order(const part* c, const elem* e, const unsigned n) {
   unsigned* order = (unsigned*)calloc(n, sizeof(unsigned));
   int i, k;
   for (k = 0, i = cls_ptr_h; -1 != i; i = c[i].n) {
@@ -397,11 +397,11 @@ bool check_cases_in_3b(const elem* e, const list_unsigned* SandT) {
 }
 
 
-void refine_sub(class* c, elem* e, const pair_list_unsigned* ST, const unsigned case_number, const unsigned n) {
+void refine_sub(part* c, elem* e, const pair_list_unsigned* ST, const unsigned case_number, const unsigned n) {
   unsigned cc3;
   switch (case_number) {
   case 1:
-    insert_new_class(c, e, ST->second, cls_ptr_t);
+    insert_new_part(c, e, ST->second, cls_ptr_t);
     break;
   case 2:
     /* list_unsigned_print(ST->first); putchar('\n'); */
@@ -421,7 +421,7 @@ void refine_sub(class* c, elem* e, const pair_list_unsigned* ST, const unsigned 
   }
 }
 
-void insert_new_class(class* c, elem* e, const list_unsigned* T, const int i) {
+void insert_new_part(part* c, elem* e, const list_unsigned* T, const int i) {
   ++MAX_CLASS_NUMBER;
   
   if (-1 == i) {
@@ -467,7 +467,7 @@ void insert_new_class(class* c, elem* e, const list_unsigned* T, const int i) {
   }
 }
 
-void refine_class(class* c, elem* e, const unsigned k, const int cls_num) {
+void refine_part(part* c, elem* e, const unsigned k, const int cls_num) {
   if (1 == c[cls_num].s)
     return;
   if (k == (unsigned)c[cls_num].h)
@@ -484,12 +484,12 @@ void refine_class(class* c, elem* e, const unsigned k, const int cls_num) {
   e[k].b = cls_num;
 }
 
-void clear_counter(class* c) {
+void clear_counter(part* c) {
   c->counter = 0;
 }
 
-void update_class(class* c, elem* e, const unsigned cls_num) {
-/* void update_class(class* c, elem* e, const unsigned cls_num, const unsigned* le) { */
+void update_part(part* c, elem* e, const unsigned cls_num) {
+/* void update_part(part* c, elem* e, const unsigned cls_num, const unsigned* le) { */
   if (c[cls_num].s == c[cls_num].counter)
     return;
   ++MAX_CLASS_NUMBER;
@@ -511,16 +511,16 @@ void update_class(class* c, elem* e, const unsigned cls_num) {
   c[cls_num].h = i;
 
   if (-1 == c[cls_num].p)
-    class_insert(c, -1, MAX_CLASS_NUMBER);
+    part_insert(c, -1, MAX_CLASS_NUMBER);
   else if (-1 != c[cls_num].p && 0 < c[c[cls_num].p].counter)
-    class_insert(c, c[cls_num].p, MAX_CLASS_NUMBER);
+    part_insert(c, c[cls_num].p, MAX_CLASS_NUMBER);
   else
-    class_insert(c, cls_num, MAX_CLASS_NUMBER);
+    part_insert(c, cls_num, MAX_CLASS_NUMBER);
 }
 
-void refine_2(class* c, elem* e, const list_unsigned* T) {
-  list_unsigned* refined_class = (list_unsigned*)calloc(1, sizeof(list_unsigned));
-  /* bool* refined_class_flag = (bool*)calloc(n, sizeof(bool)); */
+void refine_2(part* c, elem* e, const list_unsigned* T) {
+  list_unsigned* refined_part = (list_unsigned*)calloc(1, sizeof(list_unsigned));
+  /* bool* refined_part_flag = (bool*)calloc(n, sizeof(bool)); */
   /* unsigned* refined_last_element = (unsigned*)calloc(n, sizeof(unsigned)); */
 
   /* element_print(e, elem_ptr_h); */
@@ -528,33 +528,33 @@ void refine_2(class* c, elem* e, const list_unsigned* T) {
   for (ptr = T->head; NULL != ptr; ptr = ptr->next) {
     int cls_num = e[ptr->key].b;
     c[cls_num].counter += 1;
-    /* if (!refined_class_flag[cls_num]) { */
+    /* if (!refined_part_flag[cls_num]) { */
     if (!REFINED_CLASS_FLAG[cls_num]) {
-      list_unsigned_add_rear(refined_class, cls_num);
+      list_unsigned_add_rear(refined_part, cls_num);
       /* refined_last_element[cls_num] = ptr->key; */
       REFINED_LAST_ELEMENT[cls_num] = ptr->key;
-      /* refined_class_flag[cls_num] = true; */
+      /* refined_part_flag[cls_num] = true; */
       REFINED_CLASS_FLAG[cls_num] = true;
     }
-    refine_class(c, e, ptr->key, cls_num);
+    refine_part(c, e, ptr->key, cls_num);
     /* element_print(e, elem_ptr_h); */
   }
 
-  for (ptr = refined_class->head; NULL != ptr; ptr = ptr->next)
-    /* update_class(c, e, ptr->key, refined_last_element); */
-    update_class(c, e, ptr->key);
+  for (ptr = refined_part->head; NULL != ptr; ptr = ptr->next)
+    /* update_part(c, e, ptr->key, refined_last_element); */
+    update_part(c, e, ptr->key);
 
-  for (ptr = refined_class->head; NULL != ptr; ptr = ptr->next) {
+  for (ptr = refined_part->head; NULL != ptr; ptr = ptr->next) {
     REFINED_CLASS_FLAG[ptr->key] = false;
     clear_counter(&(c[ptr->key]));
   }
   
-  /* free(refined_class_flag); refined_class_flag = NULL; */
+  /* free(refined_part_flag); refined_part_flag = NULL; */
   /* free(refined_last_element); refined_last_element = NULL; */
-  list_unsigned_clear(refined_class); refined_class = NULL;
+  list_unsigned_clear(refined_part); refined_part = NULL;
 }
 
-void update_class_3(class* c, elem* e, const unsigned cls_num, const unsigned* le) {
+void update_part_3(part* c, elem* e, const unsigned cls_num, const unsigned* le) {
   if (c[cls_num].s == c[cls_num].counter)
     return;
   ++MAX_CLASS_NUMBER;
@@ -576,12 +576,12 @@ void update_class_3(class* c, elem* e, const unsigned cls_num, const unsigned* l
   i = e[i].n;
   c[cls_num].h = i;
 
-  class_insert(c, -1, MAX_CLASS_NUMBER);
+  part_insert(c, -1, MAX_CLASS_NUMBER);
 }
 
-void refine_3_a(class* c, elem* e, const pair_list_unsigned* ST, const unsigned n) {
-  list_unsigned* refined_class = (list_unsigned*)calloc(1, sizeof(list_unsigned));
-  bool* refined_class_flag = (bool*)calloc(n, sizeof(bool));
+void refine_3_a(part* c, elem* e, const pair_list_unsigned* ST, const unsigned n) {
+  list_unsigned* refined_part = (list_unsigned*)calloc(1, sizeof(list_unsigned));
+  bool* refined_part_flag = (bool*)calloc(n, sizeof(bool));
   unsigned* refined_last_element = (unsigned*)calloc(n, sizeof(unsigned));
 
   /* putchar('@'); element_print(e, elem_ptr_h); */
@@ -589,40 +589,40 @@ void refine_3_a(class* c, elem* e, const pair_list_unsigned* ST, const unsigned 
   for (ptr = ST->first->head; NULL != ptr; ptr = ptr->next) {
     int cls_num = e[ptr->key].b;
     c[cls_num].counter += 1;
-    if (!refined_class_flag[cls_num]) {
-      list_unsigned_add_rear(refined_class, cls_num);
+    if (!refined_part_flag[cls_num]) {
+      list_unsigned_add_rear(refined_part, cls_num);
       refined_last_element[cls_num] = ptr->key;
-      refined_class_flag[cls_num] = true;
+      refined_part_flag[cls_num] = true;
     }
-    refine_class(c, e, ptr->key, cls_num);
+    refine_part(c, e, ptr->key, cls_num);
     /* printf("@@"); element_print(e, elem_ptr_h); */
   }
   
-  for (ptr = refined_class->head; NULL != ptr; ptr = ptr->next)
-    update_class_3(c, e, ptr->key, refined_last_element);
+  for (ptr = refined_part->head; NULL != ptr; ptr = ptr->next)
+    update_part_3(c, e, ptr->key, refined_last_element);
 
   /* partition_print(c, e); */
-  for (ptr = refined_class->head; NULL != ptr; ptr = ptr->next)
+  for (ptr = refined_part->head; NULL != ptr; ptr = ptr->next)
     clear_counter(&(c[ptr->key]));
 
   /* list_unsigned_print(ST->second); putchar('\n'); */
-  insert_new_class(c, e, ST->second, -1);
+  insert_new_part(c, e, ST->second, -1);
   
-  free(refined_class_flag); refined_class_flag = NULL;
+  free(refined_part_flag); refined_part_flag = NULL;
   free(refined_last_element); refined_last_element = NULL;
-  list_unsigned_clear(refined_class); refined_class = NULL;
+  list_unsigned_clear(refined_part); refined_part = NULL;
 }
 
-void refine_3_b(class* c, elem* e, const pair_list_unsigned* ST) {
+void refine_3_b(part* c, elem* e, const pair_list_unsigned* ST) {
   refine_2(c, e, ST->first);
   const bool cc3b = check_cases_in_3b(e, ST->first);
   if (cc3b) 
-    insert_new_class(c, e, ST->second, -1);
+    insert_new_part(c, e, ST->second, -1);
   else
-    insert_new_class(c, e, ST->second, cls_ptr_t);
+    insert_new_part(c, e, ST->second, cls_ptr_t);
 }
 
-void refine(class* c, elem* e, const list_unsigned* T, const unsigned n) {
+void refine(part* c, elem* e, const list_unsigned* T, const unsigned n) {
   pair_list_unsigned* ST = split(e, T);
   const unsigned cc = check_cases(T, ST->first);
   CASES = cc;
@@ -638,7 +638,7 @@ void refine(class* c, elem* e, const list_unsigned* T, const unsigned n) {
   pair_list_unsigned_clear(ST);
 }  
 
-void partition_print(const class* c, const elem* e) {
+void partition_print(const part* c, const elem* e) {
   int i = cls_ptr_h;
   while (-1 != i) {
     int j = c[i].h;
