@@ -410,6 +410,8 @@ void refine_sub(part* c, elem* e, const pair_list_unsigned* ST, const unsigned c
   default:
     cc3 = check_cases_in_3(e, ST->first);
     /* printf("case [%d]\n", cc3); */
+    /* list_unsigned_print(ST->first); putchar('\n'); */
+    /* list_unsigned_print(ST->second); putchar('\n'); */
     switch (cc3) {
     case 1:
       refine_3_a(c, e, ST, n);
@@ -494,22 +496,26 @@ void update_part(part* c, elem* e, const unsigned cls_num) {
     return;
   ++MAX_CLASS_NUMBER;
 
+  /* printf("c[%u].s = %u, c[%u].count = %u\n", cls_num, c[cls_num].s, cls_num, c[cls_num].counter); */
+  
   int i = c[cls_num].h;
   c[cls_num].s -= 1;
   e[i].b = MAX_CLASS_NUMBER;
   c[MAX_CLASS_NUMBER].h = c[MAX_CLASS_NUMBER].t = i;
+  c[MAX_CLASS_NUMBER].s = 1;
   if ((int)REFINED_LAST_ELEMENT[cls_num] != i) {
     for ( ; (int)REFINED_LAST_ELEMENT[cls_num] != i; i = e[i].n) {
       c[cls_num].s -= 1;
       e[i].b = MAX_CLASS_NUMBER;
       c[MAX_CLASS_NUMBER].t = i;
+      c[MAX_CLASS_NUMBER].s += 1;
     }
     e[i].b = MAX_CLASS_NUMBER;
     c[MAX_CLASS_NUMBER].t = i;
   }
   i = e[i].n;
   c[cls_num].h = i;
-
+  
   if (-1 == c[cls_num].p)
     part_insert(c, -1, MAX_CLASS_NUMBER);
   else if (-1 != c[cls_num].p && 0 < c[c[cls_num].p].counter)
@@ -539,11 +545,11 @@ void refine_2(part* c, elem* e, const list_unsigned* T) {
     refine_part(c, e, ptr->key, cls_num);
     /* element_print(e, elem_ptr_h); */
   }
-
+  
   for (ptr = refined_part->head; NULL != ptr; ptr = ptr->next)
     /* update_part(c, e, ptr->key, refined_last_element); */
     update_part(c, e, ptr->key);
-
+  
   for (ptr = refined_part->head; NULL != ptr; ptr = ptr->next) {
     REFINED_CLASS_FLAG[ptr->key] = false;
     clear_counter(&(c[ptr->key]));
@@ -554,6 +560,7 @@ void refine_2(part* c, elem* e, const list_unsigned* T) {
   list_unsigned_clear(refined_part); refined_part = NULL;
 }
 
+/* le means last element */
 void update_part_3(part* c, elem* e, const unsigned cls_num, const unsigned* le) {
   if (c[cls_num].s == c[cls_num].counter)
     return;
@@ -563,19 +570,21 @@ void update_part_3(part* c, elem* e, const unsigned cls_num, const unsigned* le)
   c[cls_num].s -= 1;
   e[i].b = MAX_CLASS_NUMBER;
   c[MAX_CLASS_NUMBER].h = c[MAX_CLASS_NUMBER].t = i;
-  if ((int)le[cls_num] != i) {
+  c[MAX_CLASS_NUMBER].s = 1;
+  if ((int)le[cls_num] != i) {    
     for ( ; (int)le[cls_num] != i; i = e[i].n) {
-      c[cls_num].s = -1;
+      c[cls_num].s -= 1;
       e[i].b = MAX_CLASS_NUMBER;
       c[MAX_CLASS_NUMBER].t = i;
+      c[MAX_CLASS_NUMBER].s += 1;
     }
-    c[cls_num].s = -1;
+    /* c[cls_num].s -= 1; */
     e[i].b = MAX_CLASS_NUMBER;
     c[MAX_CLASS_NUMBER].t = i;
   }
   i = e[i].n;
   c[cls_num].h = i;
-
+  /* printf("@ i = %d\n", i); */
   part_insert(c, -1, MAX_CLASS_NUMBER);
 }
 
@@ -597,11 +606,12 @@ void refine_3_a(part* c, elem* e, const pair_list_unsigned* ST, const unsigned n
     refine_part(c, e, ptr->key, cls_num);
     /* printf("@@"); element_print(e, elem_ptr_h); */
   }
-  
+
   for (ptr = refined_part->head; NULL != ptr; ptr = ptr->next)
     update_part_3(c, e, ptr->key, refined_last_element);
 
-  /* partition_print(c, e); */
+  /* printf("c[%d].s = %u\n", cls_ptr_h, c[cls_ptr_h].s); */
+  /* printf("@@ "); partition_print(c, e); */
   for (ptr = refined_part->head; NULL != ptr; ptr = ptr->next)
     clear_counter(&(c[ptr->key]));
 
@@ -649,7 +659,8 @@ void partition_print(const part* c, const elem* e) {
       printf(", %d(%d)", j, e[j].b);
       j = e[j].n;
     }
-    printf(" }\n");
+    /* printf(" }\n"); */
+    printf("} [s = %u]\n", c[i].s);
     i = c[i].n;
   }
 }
