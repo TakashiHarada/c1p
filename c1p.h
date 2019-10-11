@@ -30,6 +30,7 @@ unsigned cls_ptr_t;
 // insert 'i' next to the e[ptr]
 // It is possible to i become to -1.
 void part_insert(part* c, const int ptr, const int i) {
+  /* printf("ptr = %d, i = %d, cls_ptr_h = %d\n", ptr, i, cls_ptr_h); */
   if (-1 == ptr) {
     c[i].n = cls_ptr_h;
     c[i].p = -1;
@@ -134,7 +135,7 @@ void refine_3_a(part*, elem*, const pair_list_unsigned*, const unsigned);
 void refine_3_b(part*, elem*, const pair_list_unsigned*);
 void refine_part(part*, elem*, const unsigned, const int);
 /* void update_part(part*, elem*, const unsigned, const unsigned*); */
-void update_part(part*, elem*, const unsigned);
+bool update_part(part*, elem*, const unsigned);
 void update_part_3(part*, elem*, const unsigned, const unsigned*);
 void clear_counter(part*);
 void partition_print(const part*, const elem*);
@@ -203,32 +204,9 @@ int CASES;
 bool is_consecutive(part*, const elem* e, const list_unsigned*);
 
 bool is_consecutive(part* c, const elem* e, const list_unsigned* T) { // FIXME
+  /* printf("CASES = %d\n", CASES); */
   if (1 == CASES)
     return true;
-
-  /* list_unsigned* intersect = (list_unsigned*)calloc(n, sizeof(list_unsigned)); */
-  /* bool* intflag = (bool*)calloc(n, sizeof(bool)); */
-  /* list_unsigned_cell* ptr; */
-
-  /* for (ptr = T->head; NULL != ptr; ptr = ptr->next) */
-  /*   if (!intflag[e[ptr->key].b]) { */
-  /*     list_unsigned_add_rear(intersect, e[ptr->key].b); */
-  /*     intflag[e[ptr->key].b] = true; */
-  /*   } */
-
-  /* int i; */
-  /* for (i = cls_ptr_h; -1 != i; i = c[i].n) { */
-  /*   /\* printf("cls_num = %d\n", i); *\/ */
-  /*   if (intflag[i]) { */
-  /*     most_right = i; */
-  /*     if (-1 == most_left) */
-  /* 	most_left = i; */
-  /*   } */
-  /* } */
-
-  /* list_unsigned_print(T); putchar('\n'); */
-  /* partition_print(c, e);  */
-  /* printf("##########################\n"); */
 
   list_unsigned_cell* p;
   for (p = T->head; NULL != p; p = p->next)
@@ -245,28 +223,14 @@ bool is_consecutive(part* c, const elem* e, const list_unsigned* T) { // FIXME
   for (i = c[i].n; -1 != i && 0 != c[i].counter; i = c[i].n)
     sum += c[i].counter;
 
-  /* printf("sum = %d\n", sum); */
-  /* /\* printf("left = %d, right = %d\n", most_left, most_right); *\/ */
 
   for (ptr = T->head; NULL != ptr; ptr = ptr->next)
     c[e[ptr->key].b].counter = 0;
-
+  
   if (T->size == sum)
     return true;
 
   return false;
-  
-  bool flag = true;
-  /* for (i = most_left; i != c[most_right].n; i = c[i].n) */
-  /*   if (!intflag[i]) { */
-  /*     flag = false; */
-  /*     break; */
-  /*   } */
-  
-  /* free(intflag); intflag = NULL; */
-  /* list_unsigned_clear(intersect); intersect = NULL; */
-  
-  return flag;
 }
 
 unsigned* get_c1p_order(matrix* M) {
@@ -308,7 +272,7 @@ unsigned* get_c1p_order(matrix* M) {
     
     for ( ; NULL != p; p = p->next) {
       if (1 < Ma->r[p->key]->size) {
-	CASES = most_left = most_right = -1;
+	// CASES = most_left = most_right = -1;
     	refine(c, e, Ma->r[p->key], Ma->n);
     	if (!is_consecutive(c, e, Ma->r[p->key])) {
     	  printf("Input Matrix is non-C1P\n");
@@ -343,6 +307,15 @@ unsigned* set_order(const part* c, const elem* e, const unsigned n) {
       ++k;
     }
   }
+
+  /* いずれのpartにも属さない列を右端にくっつける */
+  for (i = elem_ptr_h; -1 != i; i = e[i].n)
+    if (-1 == e[i].b) {
+      // printf("%d\n", i);
+      order[k] = i;
+      ++k;
+    }
+
   return order;
 }
 
@@ -490,10 +463,10 @@ void clear_counter(part* c) {
   c->counter = 0;
 }
 
-void update_part(part* c, elem* e, const unsigned cls_num) {
+bool update_part(part* c, elem* e, const unsigned cls_num) {
 /* void update_part(part* c, elem* e, const unsigned cls_num, const unsigned* le) { */
   if (c[cls_num].s == c[cls_num].counter)
-    return;
+    return false;
   ++MAX_CLASS_NUMBER;
 
   /* printf("c[%u].s = %u, c[%u].count = %u\n", cls_num, c[cls_num].s, cls_num, c[cls_num].counter); */
@@ -503,25 +476,31 @@ void update_part(part* c, elem* e, const unsigned cls_num) {
   e[i].b = MAX_CLASS_NUMBER;
   c[MAX_CLASS_NUMBER].h = c[MAX_CLASS_NUMBER].t = i;
   c[MAX_CLASS_NUMBER].s = 1;
+  c[MAX_CLASS_NUMBER].counter = 1;
   if ((int)REFINED_LAST_ELEMENT[cls_num] != i) {
     for ( ; (int)REFINED_LAST_ELEMENT[cls_num] != i; i = e[i].n) {
       c[cls_num].s -= 1;
       e[i].b = MAX_CLASS_NUMBER;
       c[MAX_CLASS_NUMBER].t = i;
       c[MAX_CLASS_NUMBER].s += 1;
+      c[MAX_CLASS_NUMBER].counter += 1;
     }
     e[i].b = MAX_CLASS_NUMBER;
     c[MAX_CLASS_NUMBER].t = i;
   }
   i = e[i].n;
   c[cls_num].h = i;
+
+  /* printf("c[%d].p = %d\n", cls_num, c[cls_num].p); */
   
   if (-1 == c[cls_num].p)
-    part_insert(c, -1, MAX_CLASS_NUMBER);
+    /* part_insert(c, -1, MAX_CLASS_NUMBER); */
+    part_insert(c, cls_ptr_h, MAX_CLASS_NUMBER);
   else if (-1 != c[cls_num].p && 0 < c[c[cls_num].p].counter)
     part_insert(c, c[cls_num].p, MAX_CLASS_NUMBER);
   else
     part_insert(c, cls_num, MAX_CLASS_NUMBER);
+  return true;
 }
 
 void refine_2(part* c, elem* e, const list_unsigned* T) {
@@ -545,19 +524,33 @@ void refine_2(part* c, elem* e, const list_unsigned* T) {
     refine_part(c, e, ptr->key, cls_num);
     /* element_print(e, elem_ptr_h); */
   }
-  
-  for (ptr = refined_part->head; NULL != ptr; ptr = ptr->next)
-    /* update_part(c, e, ptr->key, refined_last_element); */
-    update_part(c, e, ptr->key);
+
+  list_unsigned* new_part = (list_unsigned*)calloc(1, sizeof(list_unsigned));
   
   for (ptr = refined_part->head; NULL != ptr; ptr = ptr->next) {
+    /* update_part(c, e, ptr->key, refined_last_element); */
+    bool flag = update_part(c, e, ptr->key);
+    if (flag)
+      list_unsigned_add_rear(new_part, MAX_CLASS_NUMBER);
+  }
+
+  for (ptr = refined_part->head; NULL != ptr; ptr = ptr->next) {
+    /* printf("[[%d]]\n", ptr->key); */
     REFINED_CLASS_FLAG[ptr->key] = false;
     clear_counter(&(c[ptr->key]));
   }
+
+  for (ptr = new_part->head; NULL != ptr; ptr = ptr->next) {
+    /* printf("[[%d]]\n", ptr->key); */
+    REFINED_CLASS_FLAG[ptr->key] = false;
+    clear_counter(&(c[ptr->key]));
+  }
+
   
   /* free(refined_part_flag); refined_part_flag = NULL; */
   /* free(refined_last_element); refined_last_element = NULL; */
   list_unsigned_clear(refined_part); refined_part = NULL;
+  list_unsigned_clear(new_part); new_part = NULL;
 }
 
 /* le means last element */
@@ -660,7 +653,7 @@ void partition_print(const part* c, const elem* e) {
       j = e[j].n;
     }
     /* printf(" }\n"); */
-    printf("} [s = %u]\n", c[i].s);
+    printf("} [s = %u][c = %u]\n", c[i].s, c[i].counter);
     i = c[i].n;
   }
 }
