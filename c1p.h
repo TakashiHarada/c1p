@@ -178,6 +178,7 @@ void set_p0(const adjacency_list* M, const unsigned i, part* c, elem* e) {
   k = p->key;
   c[cls_ptr_h].h = c[cls_ptr_h].t = k;
   c[cls_ptr_h].s = 1;
+  c[cls_ptr_h].p = c[cls_ptr_h].n = -1;
   element_remove(e, k);
   element_insert(e, -1, k);
   e[k].b = 0;
@@ -197,8 +198,6 @@ void set_p0(const adjacency_list* M, const unsigned i, part* c, elem* e) {
   MAX_CLASS_NUMBER = cls_ptr_h = cls_ptr_t = 0;
 }
 
-int most_left;
-int most_right;
 int CASES;
 
 bool is_consecutive(part*, const elem* e, const list_unsigned*);
@@ -272,7 +271,6 @@ unsigned* get_c1p_order(matrix* M) {
     
     for ( ; NULL != p; p = p->next) {
       if (1 < Ma->r[p->key]->size) {
-	// CASES = most_left = most_right = -1;
     	refine(c, e, Ma->r[p->key], Ma->n);
     	if (!is_consecutive(c, e, Ma->r[p->key])) {
     	  printf("Input Matrix is non-C1P\n");
@@ -451,10 +449,15 @@ void refine_part(part* c, elem* e, const unsigned k, const int cls_num) {
     c[cls_num].t = e[k].p;
   element_remove(e, k);
 
+  
+    
   int prev = e[c[cls_num].h].p;
+  /* printf("cls_num = %d, prev = %d\n", cls_num, prev); */
   element_insert(e, prev, k);
-  if (cls_num == (int)cls_ptr_h)
-    elem_ptr_h = k;
+  /* printf("@@@ "); element_print(e, elem_ptr_h); */
+  
+  /* if (cls_num == (int)cls_ptr_h) */
+  /*   elem_ptr_h = k; */
   c[cls_num].h = k;
   e[k].b = cls_num;
 }
@@ -521,10 +524,13 @@ void refine_2(part* c, elem* e, const list_unsigned* T) {
       /* refined_part_flag[cls_num] = true; */
       REFINED_CLASS_FLAG[cls_num] = true;
     }
+    /* printf("### "); element_print(e, elem_ptr_h); */
     refine_part(c, e, ptr->key, cls_num);
     /* element_print(e, elem_ptr_h); */
   }
 
+
+  
   list_unsigned* new_part = (list_unsigned*)calloc(1, sizeof(list_unsigned));
   
   for (ptr = refined_part->head; NULL != ptr; ptr = ptr->next) {
@@ -603,7 +609,6 @@ void refine_3_a(part* c, elem* e, const pair_list_unsigned* ST, const unsigned n
   for (ptr = refined_part->head; NULL != ptr; ptr = ptr->next)
     update_part_3(c, e, ptr->key, refined_last_element);
 
-  /* printf("c[%d].s = %u\n", cls_ptr_h, c[cls_ptr_h].s); */
   /* printf("@@ "); partition_print(c, e); */
   for (ptr = refined_part->head; NULL != ptr; ptr = ptr->next)
     clear_counter(&(c[ptr->key]));
@@ -653,7 +658,8 @@ void partition_print(const part* c, const elem* e) {
       j = e[j].n;
     }
     /* printf(" }\n"); */
-    printf("} [s = %u][c = %u]\n", c[i].s, c[i].counter);
+    /* printf("} [s = %u][c = %u]\n", c[i].s, c[i].counter); */
+    printf("} [p = %d][n = %d][c = %u]\n", c[i].p, c[i].n, c[i].counter);
     i = c[i].n;
   }
 }
