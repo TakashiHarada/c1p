@@ -1,5 +1,4 @@
 VPATH = include
-#CFLAGS = -I include
 CC = gcc
 
 c1p: c1p.o
