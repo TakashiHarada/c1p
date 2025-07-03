@@ -41,10 +41,8 @@ void part_insert(part* c, const int ptr, const int i) {
     c[i].n = c[ptr].n;
     c[i].p = ptr;
     c[ptr].n = i;
-    if (-1 != c[i].n)
-      c[c[i].n].p = i;
-    if (-1 == c[i].n)
-      cls_ptr_t = i;
+    if (-1 != c[i].n) c[c[i].n].p = i;
+    if (-1 == c[i].n) cls_ptr_t = i;
   }
 }
 
@@ -75,18 +73,14 @@ void element_insert(elem* e, const int ptr, const int i) {
     e[i].n = e[ptr].n;
     e[i].p = ptr;
     e[ptr].n = i;
-    if (-1 != e[i].n)
-      e[e[i].n].p = i;
+    if (-1 != e[i].n) e[e[i].n].p = i;
   }
 }
 
 void element_remove(elem* e, const int k) {
-  if (-1 != e[k].p)
-    e[e[k].p].n = e[k].n;
-  if (-1 != e[k].n)
-    e[e[k].n].p = e[k].p;
-  if (-1 == e[k].p)
-    elem_ptr_h = e[k].n;
+  if (-1 != e[k].p) e[e[k].p].n = e[k].n;
+  if (-1 != e[k].n) e[e[k].n].p = e[k].p;
+  if (-1 == e[k].p) elem_ptr_h = e[k].n;
   
   e[k].b = -1;
   e[k].n = -1;
@@ -96,8 +90,7 @@ void element_remove(elem* e, const int k) {
 void element_print(const elem* e, const int i) {
   printf("%d", i);
   int j = e[i].n;
-  for ( ; -1 != j; j = e[j].n)
-    printf(" --> %d", j);
+  for ( ; -1 != j; j = e[j].n) printf(" --> %d", j);
   putchar('\n');
 }
 
@@ -204,30 +197,29 @@ bool is_consecutive(part*, const elem* e, const list_unsigned*);
 
 bool is_consecutive(part* c, const elem* e, const list_unsigned* T) { // FIXME
   /* printf("CASES = %d\n", CASES); */
-  if (1 == CASES)
-    return true;
+  if (1 == CASES) return true;
 
   list_unsigned_cell* p;
-  for (p = T->head; NULL != p; p = p->next)
-    c[e[p->key].b].counter += 1;
+  for (p = T->head; NULL != p; p = p->next) c[e[p->key].b].counter += 1;
   
   list_unsigned_cell* ptr = T->head;
   
   int i;
   unsigned sum = 0;
-  for (i = e[ptr->key].b; -1 != i && 0 != c[i].counter; i = c[i].p)
+  for (i = e[ptr->key].b; -1 != i && 0 != c[i].counter; i = c[i].p) {
     sum += c[i].counter;
+  }
 
   i = e[ptr->key].b;
-  for (i = c[i].n; -1 != i && 0 != c[i].counter; i = c[i].n)
+  for (i = c[i].n; -1 != i && 0 != c[i].counter; i = c[i].n) {
     sum += c[i].counter;
+  }
 
-
-  for (ptr = T->head; NULL != ptr; ptr = ptr->next)
+  for (ptr = T->head; NULL != ptr; ptr = ptr->next) {
     c[e[ptr->key].b].counter = 0;
+  }
   
-  if (T->size == sum)
-    return true;
+  if (T->size == sum) return true;
 
   return false;
 }
@@ -246,7 +238,7 @@ unsigned* get_c1p_order(matrix* M) {
   /* adjacency_list_print(Ma); */
 					     
   unsigned num_c = G->num_of_components;
-  /* printf("#component = %d\n", num_c); */
+  printf("#component = %d\n", num_c);
 
   REFINED_CLASS_FLAG = (bool*)calloc(M->n, sizeof(bool));
   REFINED_LAST_ELEMENT = (unsigned*)calloc(M->n, sizeof(unsigned));
@@ -255,11 +247,11 @@ unsigned* get_c1p_order(matrix* M) {
   bool init_flag = true;
   for (k = 0; k < num_c; ++k) {
     unsigned t = G->com[k]->size;
-    if (1 == t)
-      continue;
     list_unsigned* L = spanning_tree(G, k);
-    /* printf("ST[%d] : ", k); list_unsigned_print(L); printf("\n"); */
 
+    /* if (1 == t) continue; */    
+    /* printf("ST[%d] : ", k); list_unsigned_print(L); printf("\n"); */
+    
     list_unsigned_cell* p = L->head;
     if (init_flag) {
       set_p0(Ma, p->key, c, e);
@@ -289,12 +281,13 @@ unsigned* get_c1p_order(matrix* M) {
   free(REFINED_LAST_ELEMENT);
   adjacency_list_clear(Ma); Ma = NULL;
   graph_clear(G); G = NULL;
-
+  
   unsigned* order = set_order(c, e, M->n);  
   return order;
 }
 
 unsigned* set_order(const part* c, const elem* e, const unsigned n) {
+  /* printf("cls_ptr_h = %u\n", cls_ptr_h); */
   unsigned* order = (unsigned*)calloc(n, sizeof(unsigned));
   int i, k;
   for (k = 0, i = cls_ptr_h; -1 != i; i = c[i].n) {

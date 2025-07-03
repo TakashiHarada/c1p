@@ -16,6 +16,8 @@ bool check_circ1p_matrix(const matrix* M) {
   matrix* N = matrix_copy(M);
   complementing_rows_with_1_in_the_first_column(N);
   /* matrix_print(M); */
+  /* printf("=====\n"); */
+  /* matrix_print(N); */
   unsigned* ord = get_c1p_order(N);
   bool flag = false;
   if (NULL != ord)
@@ -28,7 +30,7 @@ bool check_circ1p_matrix(const matrix* M) {
 unsigned* get_circ1p_order(const matrix* M) {
   matrix* N = matrix_copy(M);
   complementing_rows_with_1_in_the_first_column(N);
-  putchar('\n'); matrix_print(N); putchar('\n');
+  /* putchar('\n'); matrix_print(N); putchar('\n'); */
   unsigned* ord = get_c1p_order(N);
   matrix_clear(N); N = NULL;
   return ord;
